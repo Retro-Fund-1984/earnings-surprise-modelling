@@ -17,8 +17,7 @@ from rlearn.reporting import report_model_search_results
 
 
 precisions = {
-    f"p@{i}": RankingScorer(precision_at_k, k=i)
-    for i in [65, 100, 195, 350, 500]
+    f"p@{i}": RankingScorer(precision_at_k, k=i) for i in [65, 100, 195, 350, 500]
 }
 
 CONFIG = {
@@ -104,7 +103,7 @@ CONFIG = {
 if __name__ == "__main__":
     # Read data
     DATA_PATH = "matrices/"
-    DATE = "2023mar28"
+    DATE = "2023apr03"
     data = dict(load_datasets(DATA_PATH, target_exists=False, suffix=DATE + ".csv"))
 
     # Set up data, with train/test split mask

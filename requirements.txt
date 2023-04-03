@@ -4,3 +4,7 @@ scikit-learn
 xgboost
 ml-research
 research-learn
+
+# optional
+flake8
+black
