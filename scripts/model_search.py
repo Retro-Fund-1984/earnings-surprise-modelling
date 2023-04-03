@@ -4,74 +4,20 @@ import pandas as pd
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
 from sklearn.dummy import DummyClassifier
 from sklearn.linear_model import LogisticRegression
-from sklearn.neighbors import KNeighborsClassifier
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.tree import DecisionTreeClassifier
 from sklearn.neural_network import MLPClassifier
 from xgboost import XGBClassifier
 
-from sklearn.metrics._scorer import _BaseScorer
-from sklearn.utils.multiclass import type_of_target
 from sklearn.model_selection import PredefinedSplit
 
-from mlresearch.metrics import get_scorer
+from mlresearch.metrics import get_scorer, RankingScorer, precision_at_k
 from mlresearch.utils import check_pipelines, load_datasets
 from rlearn.model_selection import ModelSearchCV
 from rlearn.reporting import report_model_search_results
 
 
-class _ProbaScorer(_BaseScorer):
-    def _score(self, method_caller, clf, X, y, sample_weight=None):
-        """Evaluate predicted probabilities for X relative to y_true.
-        Parameters
-        ----------
-        method_caller : callable
-            Returns predictions given an estimator, method name, and other
-            arguments, potentially caching results.
-        clf : object
-            Trained classifier to use for scoring. Must have a `predict_proba`
-            method; the output of that is used to compute the score.
-        X : {array-like, sparse matrix}
-            Test data that will be fed to clf.predict_proba.
-        y : array-like
-            Gold standard target values for X. These must be class labels,
-            not probabilities.
-        sample_weight : array-like, default=None
-            Sample weights.
-        Returns
-        -------
-        score : float
-            Score function applied to prediction of estimator on X.
-        """
-
-        y_type = type_of_target(y)
-        y_pred = method_caller(clf, "predict_proba", X)
-        if y_type == "binary" and y_pred.shape[1] <= 2:
-            # `y_type` could be equal to "binary" even in a multi-class
-            # problem: (when only 2 class are given to `y_true` during scoring)
-            # Thus, we need to check for the shape of `y_pred`.
-
-            # OVERRIDEN: clf.classes_ doesn't exist apparently... Not sure
-            # what was happening there. Bug from SKlearn perhaps?
-            y_pred = y_pred[:, -1]
-        if sample_weight is not None:
-            return self._sign * self._score_func(
-                y, y_pred, sample_weight=sample_weight, **self._kwargs
-            )
-        else:
-            return self._sign * self._score_func(y, y_pred, **self._kwargs)
-
-    def _factory_args(self):
-        return ", needs_proba=True"
-
-
-def precision_at_k(y_true, y_score, k=10):
-    top_idx = np.argsort(y_score)[-k:]
-    return y_true[top_idx].sum() / k
-
-
 precisions = {
-    f"p@{i}": _ProbaScorer(precision_at_k, 1, {"k": i})
+    f"p@{i}": RankingScorer(precision_at_k, k=i)
     for i in [65, 100, 195, 350, 500]
 }
 
