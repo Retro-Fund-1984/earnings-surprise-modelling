@@ -110,8 +110,12 @@ if __name__ == "__main__":
     keys = np.sort(list(data.keys()))
     x_data = [data[k] for k in keys if k.startswith("X")]
     y_data = [data[k] for k in keys if k.startswith("Y")]
-    X = pd.concat(x_data).drop(columns=["Unnamed: 0", "target"]).set_index("symbol")
-    y = pd.concat(y_data).drop(columns="Unnamed: 0").squeeze().astype(int)
+    X = pd.concat(x_data).drop(
+        columns=["Unnamed: 0", "target"], errors="ignore"
+    ).set_index("symbol")
+    y = pd.concat(y_data).drop(
+        columns="Unnamed: 0", errors="ignore"
+    ).squeeze().astype(int)
     ps = np.concatenate(
         [
             # -1 means train, 0 means test
