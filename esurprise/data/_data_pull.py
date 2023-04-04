@@ -1,81 +1,97 @@
 from copy import deepcopy
+import numpy as np
 import pandas as pd
 from yahooquery import Ticker
+from ..utils import parallel_loop
 
 
-def income_statement_history(symbols):
+def _income_statement_history(symbol):
     """
     Download and preprocess income statements.
     """
-    data = Ticker(symbols).all_modules
+    data = Ticker(symbol).all_modules
 
-    out_df = pd.DataFrame()
+    if (
+        (len(data[symbol]) == 0)
+        or (type(data[symbol]) == str)
+        or ("incomeStatementHistoryQuarterly" not in data[symbol].keys())
+    ):
+        return None
 
-    for s in symbols:
-        try:
-            temp_data = data[s]["incomeStatementHistoryQuarterly"][
-                "incomeStatementHistory"
-            ]
-            if len(temp_data) == 0:
-                continue
-        except:
-            continue
+    temp_data = data[symbol]["incomeStatementHistoryQuarterly"][
+        "incomeStatementHistory"
+    ]
 
-        temp_df = pd.DataFrame(temp_data)
+    if len(temp_data) == 0:
+        return None
 
-        # Clean up dataframe
-        temp_df["symbol"] = s
-        temp_df["date"] = pd.to_datetime(temp_df["endDate"], format="%Y-%m-%d")
-        temp_df = temp_df.filter(
-            items=[
-                "symbol",
-                "date",
-                "totalRevenue",
-                "costOfRevenue",
-                "grossProfit",
-                "totalOperatingExpenses",
-                "operatingIncome",
-                "netIncome",
-            ]
-        )
+    temp_df = pd.DataFrame(temp_data)
 
-        # Create period level features
-        temp_df = temp_df.sort_values(by=["date"], ascending=False)
-        temp_df["period"] = temp_df.apply(lambda row: (row.name + 1) * -1.0, axis=1)
-
-        # Normalize features based on 'netIncome'
-        features = [
+    # Clean up dataframe
+    temp_df["symbol"] = symbol
+    temp_df["date"] = pd.to_datetime(temp_df["endDate"], format="%Y-%m-%d")
+    temp_df = temp_df.filter(
+        items=[
+            "symbol",
+            "date",
             "totalRevenue",
             "costOfRevenue",
             "grossProfit",
             "totalOperatingExpenses",
             "operatingIncome",
+            "netIncome",
         ]
-        for feature in features:
-            try:
-                temp_df[feature] = temp_df.apply(
-                    lambda row: (row[feature] / row["netIncome"]), axis=1
-                )
-            except:
-                temp_df[feature] = np.nan
+    )
 
-        # Create trend features
-        for feature in features:
-            key = f"{feature}_trend"
-            temp_df[key] = temp_df[feature] - temp_df[feature].shift(-1)
-        temp_df = temp_df.drop(columns=["netIncome"])
+    # Create period level features
+    temp_df = temp_df.sort_values(by=["date"], ascending=False)
+    temp_df["period"] = temp_df.apply(lambda row: (row.name + 1) * -1.0, axis=1)
 
-        out_df = out_df.append(temp_df, ignore_index=True)
+    # Normalize features based on 'netIncome'
+    features = [
+        "totalRevenue",
+        "costOfRevenue",
+        "grossProfit",
+        "totalOperatingExpenses",
+        "operatingIncome",
+    ]
+    for feature in features:
+        try:
+            temp_df[feature] = temp_df.apply(
+                lambda row: (row[feature] / row["netIncome"]), axis=1
+            )
+        except:
+            temp_df[feature] = np.nan
 
-    return out_df
+    # Create trend features
+    for feature in features:
+        key = f"{feature}_trend"
+        temp_df[key] = temp_df[feature] - temp_df[feature].shift(-1)
+
+    temp_df = temp_df.drop(columns=["netIncome"])
+
+    return temp_df
 
 
-def grading_history(symbols):
+def income_statement_history(symbols, n_jobs=-1):
+    statements = parallel_loop(
+        _income_statement_history,
+        symbols,
+        n_jobs=n_jobs,
+        progress_bar=True,
+        description="Retrieving income statement history..."
+    )
+    statements = pd.concat([s for s in statements if s is not None])
+    return statements
+
+
+def _grading_history(symbol):
     """
     Download and preprocess grading history.
     """
-    data = Ticker(symbols).grading_history
-    data = data.reset_index(drop=True)
+    data = Ticker(symbol).grading_history.reset_index(drop=True)
+    if data.shape[0] == 0:
+        return None
 
     # Clean up date features
     data["epochGradeDate"] = data["epochGradeDate"].apply(lambda x: x[0:10])
@@ -92,11 +108,26 @@ def grading_history(symbols):
     return data
 
 
-def earning_history(symbols):
+def grading_history(symbols, n_jobs=-1):
+    grades = parallel_loop(
+        _grading_history,
+        symbols,
+        n_jobs=n_jobs,
+        progress_bar=True,
+        description="Retrieving grading history..."
+    )
+    grades = pd.concat([g for g in grades if g is not None])
+    return grades
+
+
+def _earning_history(symbol):
     """
     Download and preprocess earning history.
     """
-    out_df = Ticker(symbols).earning_history.reset_index().copy()
+    out_df = Ticker(symbol).earning_history.reset_index().copy()
+
+    if out_df.shape[0] == 0:
+        return None
 
     bad_symbols = set(out_df[out_df["surprisePercent"] == {}]["symbol"])
     out_df = out_df[~out_df["symbol"].isin(bad_symbols)]
@@ -122,6 +153,18 @@ def earning_history(symbols):
     )
 
     return out_df
+
+
+def earning_history(symbols, n_jobs=-1):
+    earnings = parallel_loop(
+        _earning_history,
+        symbols,
+        n_jobs=n_jobs,
+        progress_bar=True,
+        description="Retrieving earnings history..."
+    )
+    earnings = pd.concat([e for e in earnings if e is not None])
+    return earnings
 
 
 class DataLoader:
@@ -169,6 +212,10 @@ class DataLoader:
             functionName = "self." + "load_" + index + "()"
             symbols = eval(functionName)
             self.symbols_.append(symbols)
+
+        self.symbols_ = pd.concat(self.symbols_)
+
+        return self.symbols_
 
     def load_test_set(self, symbols):
         df = self.load_russell3000()
