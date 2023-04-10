@@ -1,8 +1,23 @@
 from copy import deepcopy
+from datetime import datetime
 import numpy as np
 import pandas as pd
+from pandas.tseries.offsets import DateOffset
 from yahooquery import Ticker
 from ..utils import parallel_loop
+
+
+def _get_quarter_diff(date):
+    """Returns number of quarters ago a given even happened."""
+    c_quarter = np.ceil(datetime.now().month / 3)
+    c_year = datetime.now().year
+
+    d_quarter = np.ceil(date.month/3)
+    d_year = date.year
+
+    n_quarters = (c_year - d_year)*4 + c_quarter - d_quarter
+
+    return -n_quarters
 
 
 def _income_statement_history(symbol):
@@ -12,7 +27,8 @@ def _income_statement_history(symbol):
     data = Ticker(symbol).all_modules
 
     if (
-        (len(data[symbol]) == 0)
+        (data[symbol] is None)
+        or (len(data[symbol]) == 0)
         or (type(data[symbol]) == str)
         or ("incomeStatementHistoryQuarterly" not in data[symbol].keys())
     ):
@@ -79,7 +95,7 @@ def income_statement_history(symbols, n_jobs=-1):
         symbols,
         n_jobs=n_jobs,
         progress_bar=True,
-        description="Retrieving income statement history..."
+        description="Retrieving income statement history...",
     )
     statements = pd.concat([s for s in statements if s is not None])
     return statements
@@ -103,7 +119,8 @@ def _grading_history(symbol):
         data[action] = data["action"].apply(lambda x: 1 if x == action else 0)
     data = data.filter(items=["symbol", "date", "main", "reit", "down", "up", "init"])
 
-    data["period"] = np.nan
+    data["period"] = data["date"].apply(_get_quarter_diff)
+    data["symbol"] = symbol
 
     return data
 
@@ -114,7 +131,7 @@ def grading_history(symbols, n_jobs=-1):
         symbols,
         n_jobs=n_jobs,
         progress_bar=True,
-        description="Retrieving grading history..."
+        description="Retrieving grading history...",
     )
     grades = pd.concat([g for g in grades if g is not None])
     return grades
@@ -161,7 +178,7 @@ def earning_history(symbols, n_jobs=-1):
         symbols,
         n_jobs=n_jobs,
         progress_bar=True,
-        description="Retrieving earnings history..."
+        description="Retrieving earnings history...",
     )
     earnings = pd.concat([e for e in earnings if e is not None])
     return earnings

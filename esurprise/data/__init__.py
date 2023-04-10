@@ -3,7 +3,7 @@ from ._data_pull import (
     income_statement_history,
     grading_history,
     earning_history,
-    TimeChopper
+    TimeChopper,
 )
 
 __all__ = [

@@ -14,7 +14,9 @@ def get_n_jobs(n_jobs):
         return n_jobs
 
 
-def parallel_loop(function, iterable, n_jobs=None, progress_bar=False, description=None):
+def parallel_loop(
+    function, iterable, n_jobs=None, progress_bar=False, description=None
+):
     """
     Using tqdm because it also shows elapsed time. ``rich.progress.track`` looks cooler
     though.
