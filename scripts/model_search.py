@@ -1,3 +1,5 @@
+from datetime import datetime
+
 import numpy as np
 import pandas as pd
 
@@ -103,7 +105,7 @@ CONFIG = {
 if __name__ == "__main__":
     # Read data
     DATA_PATH = "matrices/"
-    DATE = "2023apr03"
+    DATE = datetime.now().strftime('%Y%b%d').lower()
     data = dict(load_datasets(DATA_PATH, target_exists=False, suffix=DATE + ".csv"))
 
     # Set up data, with train/test split mask
