@@ -11,7 +11,8 @@ from mlresearch.utils import check_pipelines
 from esurprise.utils import parallel_loop
 from scripts.model_search import CONFIG
 
-REFERENCE_METRIC = "mean_test_p@65"
+REFERENCE_METRIC = "mean_test_p@195"
+DATE = datetime.now().strftime("%Y%b%d").lower()
 
 df = pd.read_pickle("results/experiment_results2023apr10.pkl")
 X_train = pd.read_csv("matrices/_old/X_test_2023apr10.csv").set_index("symbol")
@@ -70,10 +71,13 @@ earnings_dates = parallel_loop(
 )
 
 strategy["start_earn_date"] = pd.to_datetime(
-    [":".join(i[0].split(":")[:-1]) for i in earnings_dates]
+    [":".join(i[0].split(":")[:-1]) if len(i) > 0 else np.nan for i in earnings_dates]
 )
 strategy["end_earn_date"] = pd.to_datetime(
     [":".join(i[-1].split(":")[:-1]) if len(i) > 1 else np.nan for i in earnings_dates]
 )
 
-strategy.sort_values("start_earn_date")
+strategy = strategy.dropna(subset="start_earn_date").sort_values("start_earn_date")
+strategy[strategy["start_earn_date"] >= datetime.now()].to_csv(
+    f"earnings_strategy_top_65_of_{REFERENCE_METRIC.split('@')[-1]}_{DATE}.csv"
+)
