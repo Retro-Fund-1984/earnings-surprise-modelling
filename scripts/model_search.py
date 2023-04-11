@@ -94,6 +94,7 @@ CONFIG = {
         "accuracy": get_scorer("accuracy"),
         "f1_macro": get_scorer("f1_macro"),
         "geometric_mean_score_macro": get_scorer("geometric_mean_score_macro"),
+        "precision": get_scorer("precision"),
         **precisions,
     },
     "random_state": 42,
@@ -105,19 +106,24 @@ CONFIG = {
 if __name__ == "__main__":
     # Read data
     DATA_PATH = "matrices/"
-    DATE = datetime.now().strftime('%Y%b%d').lower()
+    DATE = datetime.now().strftime("%Y%b%d").lower()
     data = dict(load_datasets(DATA_PATH, target_exists=False, suffix=DATE + ".csv"))
 
     # Set up data, with train/test split mask
     keys = np.sort(list(data.keys()))
     x_data = [data[k] for k in keys if k.startswith("X")]
     y_data = [data[k] for k in keys if k.startswith("Y")]
-    X = pd.concat(x_data).drop(
-        columns=["Unnamed: 0", "target"], errors="ignore"
-    ).set_index("symbol")
-    y = pd.concat(y_data).drop(
-        columns="Unnamed: 0", errors="ignore"
-    ).squeeze().astype(int)
+    X = (
+        pd.concat(x_data)
+        .drop(columns=["Unnamed: 0", "target"], errors="ignore")
+        .set_index("symbol")
+    )
+    y = (
+        pd.concat(y_data)
+        .drop(columns="Unnamed: 0", errors="ignore")
+        .squeeze()
+        .astype(int)
+    )
     ps = np.concatenate(
         [
             # -1 means train, 0 means test

@@ -12,10 +12,10 @@ def _get_quarter_diff(date):
     c_quarter = np.ceil(datetime.now().month / 3)
     c_year = datetime.now().year
 
-    d_quarter = np.ceil(date.month/3)
+    d_quarter = np.ceil(date.month / 3)
     d_year = date.year
 
-    n_quarters = (c_year - d_year)*4 + c_quarter - d_quarter
+    n_quarters = (c_year - d_year) * 4 + c_quarter - d_quarter
 
     return -n_quarters
 

@@ -8,7 +8,7 @@ from esurprise.data import (
 )
 
 N_JOBS = -1
-DATE = datetime.now().strftime('%Y%b%d').lower()
+DATE = datetime.now().strftime("%Y%b%d").lower()
 
 dl = DataLoader("russell3000")
 symbols = dl.fetch_symbols()
@@ -31,15 +31,15 @@ df_prev = tc.createDataset(NumQuarters=2, Delay=1)
 df_curr = tc.createDataset(NumQuarters=2, Delay=0)
 df_fut = tc.createDataset(NumQuarters=2, Delay=-1)
 
-y_train = df_prev['target'].copy()
+y_train = df_prev["target"].copy()
 X_train = df_prev.fillna(0).drop(columns="target").copy()
 
-y_test = df_curr['target'].copy()
+y_test = df_curr["target"].copy()
 X_test = df_curr.fillna(0).drop(columns="target").copy()
 X_future = df_fut.fillna(0)
 
-X_train.to_csv(f'matrices/X_train_{DATE}.csv', index=False)
-y_train.to_csv(f'matrices/y_train_{DATE}.csv', index=False)
-X_test.to_csv(f'matrices/X_test_{DATE}.csv', index=False)
-y_test.to_csv(f'matrices/y_test_{DATE}.csv', index=False)
-X_future.to_csv(f'matrices/X_future_{DATE}.csv', index=False)
+X_train.to_csv(f"matrices/X_train_{DATE}.csv", index=False)
+y_train.to_csv(f"matrices/y_train_{DATE}.csv", index=False)
+X_test.to_csv(f"matrices/X_test_{DATE}.csv", index=False)
+y_test.to_csv(f"matrices/y_test_{DATE}.csv", index=False)
+X_future.to_csv(f"matrices/X_future_{DATE}.csv", index=False)

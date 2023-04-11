@@ -32,9 +32,7 @@ MAINTAINER = "J. Fonseca and A. Bell"
 MAINTAINER_EMAIL = "jpfonseca@novaims.unl.pt; alb9742@nyu.edu"
 URL = "https://github.com/Retro-Fund-1984/earnings-surprise-modelling"
 VERSION = __version__
-SHORT_DESCRIPTION = (
-    "Earnings surprise prediction."
-)
+SHORT_DESCRIPTION = "Earnings surprise prediction."
 LICENSE = "MIT"
 CLASSIFIERS = [
     "Intended Audience :: Science/Research",
