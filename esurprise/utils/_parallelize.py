@@ -3,7 +3,8 @@ from joblib import Parallel, delayed
 from tqdm import tqdm
 
 
-def get_n_jobs(n_jobs):
+def _get_n_jobs(n_jobs):
+    """Assign number of jobs to be assigned in parallel."""
     max_jobs = os.cpu_count()
     n_jobs = 1 if n_jobs is None else int(n_jobs)
     if n_jobs > max_jobs:
@@ -25,6 +26,6 @@ def parallel_loop(
     job completions instead the implementation could get overly complicated, and more
     volatile to changes in future Python versions/setups.
     """
-    n_jobs = get_n_jobs(n_jobs)
+    n_jobs = _get_n_jobs(n_jobs)
     iterable = tqdm(iterable, description) if progress_bar else iterable
     return Parallel(n_jobs=n_jobs)(delayed(function)(i) for i in iterable)
