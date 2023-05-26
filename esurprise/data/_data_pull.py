@@ -292,8 +292,8 @@ class TimeChopper:
         self.GradingHistory = GradingHistory
 
     def createDataset(self, NumQuarters, Delay):
-        out_df = pd.DataFrame()
 
+        out_df = []
         for symbol in set(self.Symbols["symbol"]):
             r = {}
 
@@ -404,7 +404,7 @@ class TimeChopper:
             ]
 
             GradingHistory = (
-                GradingHistory.groupby("symbol").sum().reset_index(drop=True)
+                GradingHistory.groupby("symbol").sum(numeric_only=True).reset_index(drop=True)
             )
 
             GradingActions = ["main", "reit", "down", "up", "init"]
@@ -414,14 +414,16 @@ class TimeChopper:
                 except:
                     r[f"action_{action}_sum"] = 0
 
-            out_df = out_df.append(r, ignore_index=True)
+            out_df.append(r)
+
+        out_df = pd.DataFrame(out_df)
 
         # Fill sector one hot values
         # sectorCols = [col for col in out_df if col.startswith('in_sector_')]
         # for col in sectorCols:
         #    out_df[col] = out_df[col].fillna(0)
 
-        sector_out = pd.DataFrame()
+        sector_out = []
 
         for sector in set(self.Symbols["sector"]):
             r = {}
@@ -437,7 +439,9 @@ class TimeChopper:
                 r[f"sector_max_{feature}"] = SectorDf[feature].max()
                 r[f"sector_min_{feature}"] = SectorDf[feature].min()
 
-            sector_out = sector_out.append(r, ignore_index=True)
+            sector_out.append(r)
+
+        sector_out = pd.DataFrame(sector_out)
 
         SectorOneHot = pd.get_dummies(sector_out["sector"], drop_first=False)
         sector_out = pd.merge(
