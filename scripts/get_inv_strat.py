@@ -14,10 +14,10 @@ from scripts.model_search import CONFIG
 REFERENCE_METRIC = "mean_test_p@195"
 DATE = datetime.now().strftime("%Y%b%d").lower()
 
-df = pd.read_pickle("results/experiment_results2023apr10.pkl")
-X_train = pd.read_csv("matrices/_old/X_test_2023apr10.csv").set_index("symbol")
-y_train = pd.read_csv("matrices/_old/y_test_2023apr10.csv").values.squeeze()
-X_future = pd.read_csv("matrices/_futures/X_future_2023apr10.csv").set_index("symbol")
+df = pd.read_pickle("results/experiment_results2023jun01.pkl")
+X_train = pd.read_csv("matrices/X_test_2023jun01.csv").set_index("symbol")
+y_train = pd.read_csv("matrices/y_test_2023jun01.csv").values.squeeze()
+X_future = pd.read_csv("matrices/_futures/X_future_2023jun01.csv").set_index("symbol")
 
 
 def get_earnings_date(symbol):
